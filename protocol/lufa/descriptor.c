@@ -39,6 +39,9 @@
 #include "util.h"
 #include "report.h"
 #include "descriptor.h"
+#ifdef WEBUSB_ENABLE
+#include "webusb.h"
+#endif
 
 
 /*******************************************************************************
@@ -514,6 +517,47 @@ ConfigurationDescriptor =
             .PollingIntervalMS      = 0x01
         },
 #endif
+
+        /*
+         * WebUSB
+         */
+#ifdef WEBUSB_ENABLE
+    .WebUSB_Interface =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+            .InterfaceNumber        = WEBUSB_INTERFACE,
+            .AlternateSetting       = 0x00,
+
+            .TotalEndpoints         = 2,
+
+            .Class                  = 0xFF,
+            .SubClass               = 0x00,
+            .Protocol               = 0x00,
+
+            .InterfaceStrIndex      = NO_DESCRIPTOR
+        },
+
+    .WebUSB_INEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_IN | WEBUSB_IN_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT  | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+
+    .WebUSB_OUTEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_OUT | WEBUSB_OUT_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+#endif
 };
 
 
@@ -555,6 +599,37 @@ ProductString =
     .UnicodeString          = LSTR(PRODUCT)
 };
 
+#ifdef WEBUSB_ENABLE
+static uint8_t BOSDescriptor[] = {
+    0x05,  // Length
+    DTYPE_BOS,  // Binary Object Store descriptor
+    0x39, 0x00,  // Total length
+    0x02,  // Number of device capabilities
+
+    // WebUSB Platform Capability descriptor (bVendorCode == 0x10).
+    0x18,  // Length
+    DTYPE_DEVICE_CAPABILITY,  // Device Capability descriptor
+    BOS_PLATFORM_CAPABILITY_DESCRIPTOR,  // Platform Capability descriptor
+    0x00,  // Reserved
+    0x38, 0xB6, 0x08, 0x34, 0xA9, 0x09, 0xA0, 0x47,
+    0x8B, 0xFD, 0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65,  // WebUSB GUID
+    0x00, 0x01,  // Version 1.0
+    WEBUSB_VENDOR_CODE,  // Vendor request code
+    1, //landingPage
+
+    // Microsoft OS 2.0 Platform Capability Descriptor (MS_VendorCode == 0x02)
+    0x1C,  // Length
+    DTYPE_DEVICE_CAPABILITY,  // Device Capability descriptor
+    BOS_PLATFORM_CAPABILITY_DESCRIPTOR,  // Platform Capability descriptor
+    0x00,  // Reserved
+    0xDF, 0x60, 0xDD, 0xD8, 0x89, 0x45, 0xC7, 0x4C,
+    0x9C, 0xD2, 0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,  // MS OS 2.0 GUID
+    0x00, 0x00, 0x03, 0x06,  // Windows version
+    0x2e, 0x00,  // Descriptor set length
+    MS_DESCRIPTOR_VENDOR_CODE,  // Vendor request code
+    0x00   // Alternate enumeration code
+};
+#endif
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
  *  documentation) by the application code so that the address and size of a requested descriptor can be given
@@ -675,6 +750,12 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 #endif
             }
             break;
+#ifdef WEBUSB_ENABLE
+    case DTYPE_BOS:
+        Address = &BOSDescriptor;
+        Size    = sizeof(BOSDescriptor);
+        break;
+#endif
     }
 
     *DescriptorAddress = Address;

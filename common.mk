@@ -131,6 +131,11 @@ ifdef RAWHID_ENABLE
     OPT_DEFS += -DRAWHID_ENABLE
 endif
 
+ifdef WEBUSB_ENABLE
+	SRC += $(COMMON_DIR)/webusb.c
+	OPT_DEFS += -DWEBUSB_ENABLE
+endif
+
 # Version string
 VERSION := $(shell (git describe --always --dirty || echo 'unknown') 2> /dev/null)
 OPT_DEFS += -DVERSION=$(VERSION)

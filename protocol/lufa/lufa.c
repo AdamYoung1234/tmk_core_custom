@@ -56,6 +56,9 @@
 #include "rawhid.h"
 #include "console_ring_buffer.h"
 #endif
+#ifdef WEBUSB_ENABLE
+#include "webusb.h"
+#endif
 
 uint8_t keyboard_idle = 0;
 /* 0: Boot Protocol, 1: Report Protocol(default) */
@@ -169,6 +172,46 @@ static void Console_Task(void)
 }
 #endif
 
+/*******************************************************************************
+ * WebUSB
+ ******************************************************************************/
+#ifdef WEBUSB_ENABLE
+static void WebUSB_Task(void)
+{
+    uint8_t ep = Endpoint_GetCurrentEndpoint();
+    /* Device must be connected and configured for the task to run */
+    if (USB_DeviceState != DEVICE_STATE_Configured)
+        return;
+
+    Endpoint_SelectEndpoint(WEBUSB_OUT_EPNUM);
+
+    /* Device must be connected and configured for the task to run */
+    if (USB_DeviceState != DEVICE_STATE_Configured)
+        return;
+
+    if (Endpoint_IsOUTReceived())
+    {
+        /* Check to see if the packet contains data */
+        if (Endpoint_IsReadWriteAllowed())
+        {
+            /* Create a temporary buffer to hold the read in report from the host */
+            uint8_t ConsoleData[WEBUSB_EPSIZE];
+ 
+            /* Read Console Report Data */
+            Endpoint_Read_Stream_LE(&ConsoleData, sizeof(ConsoleData), NULL);
+        }
+
+        /* Finalize the stream transfer to send the last packet */
+        Endpoint_ClearOUT();
+    }
+
+    Endpoint_SelectEndpoint(ep);
+}
+#else
+static void WebUSB_Task(void)
+{
+}
+#endif
 
 /*******************************************************************************
  * USB Events
@@ -239,6 +282,9 @@ void EVENT_USB_Device_StartOfFrame(void)
     //if (!console_flush) return;
     Console_Task();
     //console_flush = false;
+#ifdef WEBUSB_ENABLE
+    WebUSB_Task();
+#endif
 }
 //#endif
 
@@ -281,7 +327,52 @@ void EVENT_USB_Device_ConfigurationChanged(void)
     ConfigSuccess &= ENDPOINT_CONFIG(NKRO_IN_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
                                      NKRO_EPSIZE, ENDPOINT_BANK_SINGLE);
 #endif
+
+    /* Setup WebUSB Endpoints */
+#ifdef WEBUSB_ENABLE
+    ConfigSuccess &= ENDPOINT_CONFIG(WEBUSB_IN_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
+                                     CONSOLE_EPSIZE, ENDPOINT_BANK_SINGLE);
+    ConfigSuccess &= ENDPOINT_CONFIG(WEBUSB_OUT_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_OUT,
+                                     CONSOLE_EPSIZE, ENDPOINT_BANK_SINGLE);
+#endif
 }
+
+/*******************************************************************************
+ * WebUSB
+ ******************************************************************************/
+
+#ifdef WEBUSB_ENABLE
+//MS2.0 descriptor
+static uint8_t MS_OS_20_Descriptor[] = {
+    // Microsoft OS 2.0 descriptor set header (table 10)
+    0x0A, 0x00,  // Descriptor size (10 bytes)
+    0x00, 0x00,  // MS OS 2.0 descriptor set header
+    0x00, 0x00, 0x03, 0x06,  // Windows version (8.1) (0x06030000)
+    0x2e, 0x00,  // Size, MS OS 2.0 descriptor set
+
+    // Microsoft OS 2.0 configuration subset header
+    0x08, 0x00,  // Descriptor size (8 bytes)
+    0x01, 0x00,  // MS OS 2.0 configuration subset header
+    0x00,        // bConfigurationValue
+    0x00,        // Reserved
+    0x24, 0x00,  // Size, MS OS 2.0 configuration subset
+
+    // Microsoft OS 2.0 function subset header
+    0x08, 0x00,  // Descriptor size (8 bytes)
+    0x02, 0x00,  // MS OS 2.0 function subset header
+
+    KEYBOARD_INTERFACE,  //First Interface Number
+
+    0x00,        // Reserved
+    0x1c, 0x00,  // Size, MS OS 2.0 function subset
+
+    // Microsoft OS 2.0 compatible ID descriptor (table 13)
+    0x14, 0x00,  // wLength
+    0x03, 0x00,  // MS_OS_20_FEATURE_COMPATIBLE_ID
+    'W',  'I',  'N',  'U',  'S',  'B',  0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+#endif
 
 /*
 Appendix G: HID Request Support Requirements
@@ -303,6 +394,43 @@ void EVENT_USB_Device_ControlRequest(void)
 {
     uint8_t* ReportData = NULL;
     uint8_t  ReportSize = 0;
+/*
+ * WebUSB Related
+*/
+#ifdef WEBUSB_ENABLE
+    if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_DEVICE)) {
+        if(USB_ControlRequest.bRequest == WEBUSB_VENDOR_CODE) {
+            Endpoint_ClearSETUP();
+            const uint8_t wValueL = USB_ControlRequest.wValue & 0xFF;
+
+            switch(USB_ControlRequest.wIndex) {
+                //GET ALLOWED ORIGNS
+                case WEBUSB_REQUEST_GET_ALLOWED_ORIGINS:
+                    send_webusb_allowed_origins_descriptor();
+                break;
+                //GET URL
+                case WEBUSB_REQUEST_GET_URL: 
+                    send_webusb_url_descriptor(wValueL);
+                break;
+            }
+        }
+        //
+        else if(USB_ControlRequest.bRequest == MS_DESCRIPTOR_VENDOR_CODE) {
+            Endpoint_ClearSETUP();
+
+            switch(USB_ControlRequest.wIndex) {
+                case 0x07: 
+                    ReportData = (uint8_t*)MS_OS_20_Descriptor;
+                    ReportSize = sizeof(MS_OS_20_Descriptor);
+                    Endpoint_Write_Control_Stream_LE(ReportData, ReportSize);
+                    Endpoint_ClearOUT();
+                break;
+            }
+        }
+
+        return;
+    }
+#endif
 
     /* Handle HID Class specific requests */
     switch (USB_ControlRequest.bRequest)

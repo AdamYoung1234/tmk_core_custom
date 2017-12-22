@@ -57,6 +57,13 @@ typedef struct
     USB_HID_Descriptor_HID_t              Keyboard_HID;
     USB_Descriptor_Endpoint_t             Keyboard_INEndpoint;
 
+#ifdef WEBUSB_ENABLE
+    // WebUSB Interface
+    USB_Descriptor_Interface_t            WebUSB_Interface;
+    USB_Descriptor_Endpoint_t             WebUSB_INEndpoint;
+    USB_Descriptor_Endpoint_t             WebUSB_OUTEndpoint;
+#endif
+
 #ifdef MOUSE_ENABLE
     // Mouse HID Interface
     USB_Descriptor_Interface_t            Mouse_Interface;
@@ -91,10 +98,16 @@ typedef struct
 /* index of interface */
 #define KEYBOARD_INTERFACE          0
 
-#ifdef MOUSE_ENABLE
-#   define MOUSE_INTERFACE          (KEYBOARD_INTERFACE + 1)
+#ifdef WEBUSB_ENABLE
+#   define WEBUSB_INTERFACE         (KEYBOARD_INTERFACE + 1)
 #else
-#   define MOUSE_INTERFACE          KEYBOARD_INTERFACE
+#   define WEBUSB_INTERFACE         KEYBOARD_INTERFACE
+#endif
+
+#ifdef MOUSE_ENABLE
+#   define MOUSE_INTERFACE          (WEBUSB_INTERFACE + 1)
+#else
+#   define MOUSE_INTERFACE          WEBUSB_INTERFACE
 #endif 
 
 #ifdef EXTRAKEY_ENABLE
@@ -123,10 +136,17 @@ typedef struct
 // Endopoint number and size
 #define KEYBOARD_IN_EPNUM           1
 
-#ifdef MOUSE_ENABLE
-#   define MOUSE_IN_EPNUM           (KEYBOARD_IN_EPNUM + 1) 
+#ifdef WEBUSB_ENABLE
+#   define WEBUSB_IN_EPNUM          (KEYBOARD_IN_EPNUM + 1)
+#   define WEBUSB_OUT_EPNUM         (WEBUSB_IN_EPNUM + 1)
 #else
-#   define MOUSE_IN_EPNUM           KEYBOARD_IN_EPNUM
+#   define WEBUSB_OUT_EPNUM         KEYBOARD_IN_EPNUM
+#endif
+
+#ifdef MOUSE_ENABLE
+#   define MOUSE_IN_EPNUM           (WEBUSB_OUT_EPNUM + 1) 
+#else
+#   define MOUSE_IN_EPNUM           WEBUSB_OUT_EPNUM
 #endif
 
 #ifdef EXTRAKEY_ENABLE
@@ -156,6 +176,7 @@ typedef struct
 #define EXTRAKEY_EPSIZE             8
 #define CONSOLE_EPSIZE              32
 #define NKRO_EPSIZE                 16
+#define WEBUSB_EPSIZE               32
 
 
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
