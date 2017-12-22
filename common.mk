@@ -132,8 +132,8 @@ ifdef RAWHID_ENABLE
 endif
 
 ifdef WEBUSB_ENABLE
-	SRC += $(COMMON_DIR)/webusb.c
-	OPT_DEFS += -DWEBUSB_ENABLE
+    SRC += $(COMMON_DIR)/webusb.c
+    OPT_DEFS += -DWEBUSB_ENABLE
 endif
 
 # Version string

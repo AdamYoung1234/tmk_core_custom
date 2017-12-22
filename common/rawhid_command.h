@@ -38,6 +38,6 @@ enum hid_command_id
 
 bool rawhid_command_parse_hid_command(rawhid_data_t rawhid_data);
 bool rawhid_command_parse_eep_file(rawhid_data_t rawhid_data);
-void rawhid_command_print_console_data(rawhid_data_t rawhid_data);
+void rawhid_command_print_rawhid_data(rawhid_data_t rawhid_data);
 
 #endif
