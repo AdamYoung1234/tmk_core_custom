@@ -14,11 +14,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef HID_COMMAND_H
-#define HID_COMMAND_H
+#ifndef CONSOLE_COMMAND_H
+#define CONSOLE_COMMAND_H
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#define CONSOLE_EP_SIZE 32
+#define CRC_CHECK_MASK 0b01111111
+#define MORE_PACKET_MASK 0b01111111
+#define CRC_CHECK_POS 7
+#define MORE_PACKET_POS 7
+#define CONSOLE_IN_BUFFER_SIZE 64
 
 typedef struct
 {
@@ -28,16 +35,18 @@ typedef struct
     uint8_t  more_packet;
     uint8_t  has_crc_check;
     uint16_t crc;
-} rawhid_data_t;
+} console_data_t;
 
-enum hid_command_id
+enum console_command_id
 {
-    RAWHID_COMMAND_EEP_FILE = 0x10,
-    RAWHID_COMMAND_DEBUG_PRINT = 0x21
+    CONSOLE_COMMAND_EEP_FILE = 0x10,
+    CONSOLE_COMMAND_DEBUG_PRINT = 0x21
 };
 
-bool rawhid_command_parse_hid_command(rawhid_data_t rawhid_data);
-bool rawhid_command_parse_eep_file(rawhid_data_t rawhid_data);
-void rawhid_command_print_rawhid_data(rawhid_data_t rawhid_data);
+bool console_parse_raw_data(uint8_t raw_data[]);
+bool console_crc_validate(console_data_t console_data, uint16_t crc);
+bool console_parse_command_data(console_data_t console_data);
+bool console_parse_eep_file(console_data_t console_data);
+void console_print_raw_data(console_data_t console_data);
 
 #endif

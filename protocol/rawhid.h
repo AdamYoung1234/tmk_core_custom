@@ -21,16 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CONSOLE_EP_SIZE 32
-#define CRC_CHECK_MASK 0b01111111
-#define MORE_PACKET_MASK 0b01111111
-#define CRC_CHECK_POS 7
-#define MORE_PACKET_POS 7
-#define CONSOLE_IN_BUFFER_SIZE 64
-
 void receiveRawHidData(void);
-bool rawhid_process_console_data(uint8_t console_data[]);
-bool rawhid_crc_validate(uint8_t console_data[], uint16_t crc);
 void rawhid_send_in_data(uint8_t command_id, uint8_t has_crc_check , uint8_t payload_length, uint8_t more_packet,
                     uint8_t payload[], uint8_t crc_l, uint8_t crc_h);
 void rawhid_send_ack_nack(uint8_t command_id,  uint8_t data_length, uint8_t has_addtional_info,

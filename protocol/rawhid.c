@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "rawhid.h"
-#include "rawhid_command.h"
+#include "console_command.h"
 #include "debug.h"
 #include "lufa.h"
 #include "descriptor.h"
@@ -48,7 +48,7 @@ void receiveRawHidData(void)
             Endpoint_Read_Stream_LE(&ConsoleData, sizeof(ConsoleData), NULL);
 
             /* Process Console Report Data */
-            rawhid_process_console_data(ConsoleData);
+            console_parse_raw_data(ConsoleData);
         }
 
         /* Finalize the stream transfer to send the last packet */
@@ -57,46 +57,6 @@ void receiveRawHidData(void)
 
     Endpoint_SelectEndpoint(ep);
 
-}
-
-bool rawhid_process_console_data(uint8_t console_data[])
-{
-    //process raw data
-    uint8_t command_id = console_data[0];
-    uint8_t length = console_data[1];
-    uint8_t payload[length];
-    uint8_t has_crc_check = command_id >> CRC_CHECK_POS;
-    uint8_t more_packet = length >> MORE_PACKET_POS;
-
-    command_id &= MORE_PACKET_MASK;
-    length &= CRC_CHECK_MASK;
-    //assemble crc data
-    uint16_t crc = 0;
-    if(has_crc_check) {
-        crc = (console_data[length + 3] << 8) + (console_data[length + 3]);
-    } else {
-        crc = 0;
-    }
-
-    for(uint8_t i=2, j=0; j<length; i++,j++) {
-        payload[j] = console_data[i];
-    }
-
-    rawhid_data_t console_data_body;
-    console_data_body.command_id = command_id;
-    console_data_body.more_packet = more_packet;
-    console_data_body.length = length;
-    console_data_body.payload = payload;
-    console_data_body.has_crc_check = has_crc_check;
-    console_data_body.crc = crc;
-
-    if(!rawhid_crc_validate(console_data, crc)) {
-        return false;
-    }
-    //for further process
-    rawhid_command_parse_hid_command(console_data_body);
-
-    return true;
 }
 
 void rawhid_send_in_data(uint8_t command_id, uint8_t has_crc_check , uint8_t payload_length, uint8_t more_packet,
@@ -182,9 +142,3 @@ ERROR_EXIT:
     return -1;
 }
 
-//DPG2 or other hash algorithm
-bool rawhid_crc_validate(uint8_t console_data[], uint16_t crc)
-{
-    //TODO: implement crc validation
-    return true;
-}

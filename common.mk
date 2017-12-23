@@ -126,14 +126,14 @@ ifdef KEYMAP_SECTION_ENABLE
     endif
 endif
 
-ifdef RAWHID_ENABLE
-    SRC += $(COMMON_DIR)/rawhid_command.c
-    OPT_DEFS += -DRAWHID_ENABLE
+ifdef WEBUSB_ENABLE
+    SRC += $(COMMON_DIR)/console_command.c
+    OPT_DEFS += -DWEBUSB_ENABLE
 endif
 
-ifdef WEBUSB_ENABLE
-    SRC += $(COMMON_DIR)/webusb.c
-    OPT_DEFS += -DWEBUSB_ENABLE
+ifdef RAWHID_ENABLE
+    SRC += $(COMMON_DIR)/console_command.c
+    OPT_DEFS += -DRAWHID_ENABLE
 endif
 
 # Version string

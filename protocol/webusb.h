@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include "webusb_config.h"
 #include "descriptor.h"
+#include "console_command.h"
 
 /*******************************************************************************
  * WebUSB
@@ -42,7 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define WEBUSB_FUNCTION_SUBSET_HEADER         2
 #define WEBUSB_URL                            3
 
-void send_webusb_url_descriptor(int index);
-void send_webusb_allowed_origins_descriptor(void);
+void webusb_send_url_descriptor(int index);
+void webusb_send_allowed_origins_descriptor(void);
+void webusb_send_in_data(uint8_t command_id, uint8_t has_crc_check , uint8_t payload_length, uint8_t more_packet, uint8_t payload[], uint8_t crc_l, uint8_t crc_h);
+void receiveWebUSBData(void);
 
 #endif

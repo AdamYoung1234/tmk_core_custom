@@ -1,6 +1,9 @@
 #include "console_ring_buffer.h"
+#include "console_command.h"
+
+#ifdef RAWHID_ENABLE
 #include "rawhid.h"
-#include "rawhid_command.h"
+#endif
 
 
 static uint8_t rbuf[RBUF_SIZE];
@@ -58,7 +61,9 @@ void rbuf_clear(void)
         payload_length++;
     }
     if(payload_length > 0)
-        rawhid_send_in_data(RAWHID_COMMAND_DEBUG_PRINT, 0, payload_length, 0, payload, 0, 0);
+#ifdef RAWHID_ENABLE
+        rawhid_send_in_data(CONSOLE_COMMAND_DEBUG_PRINT, 0, payload_length, 0, payload, 0, 0);
+#endif
 
     rbuf_head = rbuf_tail = 0;
     SREG = sreg;

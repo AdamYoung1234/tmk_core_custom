@@ -30,6 +30,11 @@ VPATH += $(TMK_DIR)/$(LUFA_PATH)
 #ifdef EXTRAKEY_ENABLE
 #endif
 
+ifdef WEBUSB_ENABLE
+    SRC += $(TMK_DIR)/protocol/webusb.c
+    SRC += $(TMK_DIR)/protocol/console_ring_buffer.c
+endif
+
 ifdef RAWHID_ENABLE
     SRC += $(TMK_DIR)/protocol/rawhid.c
     SRC += $(TMK_DIR)/protocol/console_ring_buffer.c

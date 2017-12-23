@@ -52,12 +52,16 @@
 
 #include "descriptor.h"
 #include "lufa.h"
+
 #ifdef RAWHID_ENABLE
 #include "rawhid.h"
-#include "console_ring_buffer.h"
 #endif
 #ifdef WEBUSB_ENABLE
 #include "webusb.h"
+#endif
+#if defined(WEBUSB_ENABLE) || defined(RAWHID_ENABLE)
+#include "console_command.h"
+#include "console_ring_buffer.h"
 #endif
 
 uint8_t keyboard_idle = 0;
@@ -112,30 +116,6 @@ static void Console_Task(void)
     if (USB_DeviceState != DEVICE_STATE_Configured)
         return;
 
-#if 0
-    // TODO: impl receivechar()/recvchar()
-    Endpoint_SelectEndpoint(CONSOLE_OUT_EPNUM);
-
-    /* Check to see if a packet has been sent from the host */
-    if (Endpoint_IsOUTReceived())
-    {
-        /* Check to see if the packet contains data */
-        if (Endpoint_IsReadWriteAllowed())
-        {
-            /* Create a temporary buffer to hold the read in report from the host */
-            uint8_t ConsoleData[CONSOLE_EPSIZE];
- 
-            /* Read Console Report Data */
-            Endpoint_Read_Stream_LE(&ConsoleData, sizeof(ConsoleData), NULL);
- 
-            /* Process Console Report Data */
-            //ProcessConsoleHIDReport(ConsoleData);
-        }
-        /* Finalize the stream transfer to send the last packet */
-        Endpoint_ClearOUT();
-    }
-#endif
-
     /* IN packet */
     Endpoint_SelectEndpoint(CONSOLE_IN_EPNUM);
     if (!Endpoint_IsEnabled() || !Endpoint_IsConfigured()) {
@@ -178,34 +158,12 @@ static void Console_Task(void)
 #ifdef WEBUSB_ENABLE
 static void WebUSB_Task(void)
 {
-    uint8_t ep = Endpoint_GetCurrentEndpoint();
     /* Device must be connected and configured for the task to run */
     if (USB_DeviceState != DEVICE_STATE_Configured)
         return;
 
-    Endpoint_SelectEndpoint(WEBUSB_OUT_EPNUM);
-
-    /* Device must be connected and configured for the task to run */
-    if (USB_DeviceState != DEVICE_STATE_Configured)
-        return;
-
-    if (Endpoint_IsOUTReceived())
-    {
-        /* Check to see if the packet contains data */
-        if (Endpoint_IsReadWriteAllowed())
-        {
-            /* Create a temporary buffer to hold the read in report from the host */
-            uint8_t ConsoleData[WEBUSB_EPSIZE];
- 
-            /* Read Console Report Data */
-            Endpoint_Read_Stream_LE(&ConsoleData, sizeof(ConsoleData), NULL);
-        }
-
-        /* Finalize the stream transfer to send the last packet */
-        Endpoint_ClearOUT();
-    }
-
-    Endpoint_SelectEndpoint(ep);
+    receiveWebUSBData();
+    return;
 }
 #else
 static void WebUSB_Task(void)
@@ -406,11 +364,11 @@ void EVENT_USB_Device_ControlRequest(void)
             switch(USB_ControlRequest.wIndex) {
                 //GET ALLOWED ORIGNS
                 case WEBUSB_REQUEST_GET_ALLOWED_ORIGINS:
-                    send_webusb_allowed_origins_descriptor();
+                    webusb_send_allowed_origins_descriptor();
                 break;
                 //GET URL
                 case WEBUSB_REQUEST_GET_URL: 
-                    send_webusb_url_descriptor(wValueL);
+                    webusb_send_url_descriptor(wValueL);
                 break;
             }
         }
