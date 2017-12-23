@@ -179,7 +179,7 @@ ExtrakeyReport[] =
 };
 #endif
 
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) || defined(RAWHID_ENABLE)
 const USB_Descriptor_HIDReport_Datatype_t
 #ifdef USE_FLASH_DESCRIPTORS
 PROGMEM
@@ -257,7 +257,11 @@ DeviceDescriptor =
 {
     .Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
+#ifdef WEBUSB_ENABLE
     .USBSpecification       = VERSION_BCD(1,1,0),
+#else
+    .USBSpecification       = VERSION_BCD(2,1,0),
+#endif
     .Class                  = USB_CSCP_NoDeviceClass,
     .SubClass               = USB_CSCP_NoDeviceSubclass,
     .Protocol               = USB_CSCP_NoDeviceProtocol,
@@ -339,6 +343,47 @@ ConfigurationDescriptor =
             .EndpointSize           = KEYBOARD_EPSIZE,
             .PollingIntervalMS      = 0x0A
         },
+
+        /*
+         * WebUSB
+         */
+#ifdef WEBUSB_ENABLE
+    .WebUSB_Interface =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+            .InterfaceNumber        = WEBUSB_INTERFACE,
+            .AlternateSetting       = 0x00,
+
+            .TotalEndpoints         = 2,
+
+            .Class                  = 0xFF,
+            .SubClass               = 0x00,
+            .Protocol               = 0x00,
+
+            .InterfaceStrIndex      = NO_DESCRIPTOR
+        },
+
+    .WebUSB_INEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_IN | WEBUSB_IN_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT  | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+
+    .WebUSB_OUTEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_OUT | WEBUSB_OUT_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+#endif
 
     /*
      * Mouse
@@ -427,7 +472,7 @@ ConfigurationDescriptor =
     /*
      * Console
      */
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) || defined(RAWHID_ENABLE)
     .Console_Interface =
         {
             .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
@@ -514,47 +559,6 @@ ConfigurationDescriptor =
             .EndpointAddress        = (ENDPOINT_DIR_IN | NKRO_IN_EPNUM),
             .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
             .EndpointSize           = NKRO_EPSIZE,
-            .PollingIntervalMS      = 0x01
-        },
-#endif
-
-        /*
-         * WebUSB
-         */
-#ifdef WEBUSB_ENABLE
-    .WebUSB_Interface =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
-
-            .InterfaceNumber        = WEBUSB_INTERFACE,
-            .AlternateSetting       = 0x00,
-
-            .TotalEndpoints         = 2,
-
-            .Class                  = 0xFF,
-            .SubClass               = 0x00,
-            .Protocol               = 0x00,
-
-            .InterfaceStrIndex      = NO_DESCRIPTOR
-        },
-
-    .WebUSB_INEndpoint =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
-
-            .EndpointAddress        = (ENDPOINT_DIR_IN | WEBUSB_IN_EPNUM),
-            .Attributes             = (EP_TYPE_INTERRUPT  | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-            .EndpointSize           = WEBUSB_EPSIZE,
-            .PollingIntervalMS      = 0x01
-        },
-
-    .WebUSB_OUTEndpoint =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
-
-            .EndpointAddress        = (ENDPOINT_DIR_OUT | WEBUSB_OUT_EPNUM),
-            .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-            .EndpointSize           = WEBUSB_EPSIZE,
             .PollingIntervalMS      = 0x01
         },
 #endif

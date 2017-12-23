@@ -116,7 +116,7 @@ typedef struct
 #   define EXTRAKEY_INTERFACE       MOUSE_INTERFACE
 #endif 
 
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) || defined(RAWHID_ENABLE)
 #   define CONSOLE_INTERFACE        (EXTRAKEY_INTERFACE + 1)
 #else
 #   define CONSOLE_INTERFACE        EXTRAKEY_INTERFACE
@@ -158,7 +158,6 @@ typedef struct
 #if defined(CONSOLE_ENABLE) || defined (RAWHID_ENABLE)
 #   define CONSOLE_IN_EPNUM         (EXTRAKEY_IN_EPNUM + 1)
 #   define CONSOLE_OUT_EPNUM        (CONSOLE_IN_EPNUM + 1)
-//#   define CONSOLE_OUT_EPNUM        (EXTRAKEY_IN_EPNUM + 2)
 #else
 #   define CONSOLE_OUT_EPNUM        EXTRAKEY_IN_EPNUM
 #endif

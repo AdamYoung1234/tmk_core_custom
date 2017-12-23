@@ -378,7 +378,7 @@ void EVENT_USB_Device_ControlRequest(void)
 
             switch(USB_ControlRequest.wIndex) {
                 case 0x07: 
-                    ReportData = (uint8_t*)MS_OS_20_Descriptor;
+                    ReportData = (uint8_t*)&MS_OS_20_Descriptor;
                     ReportSize = sizeof(MS_OS_20_Descriptor);
                     Endpoint_Write_Control_Stream_LE(ReportData, ReportSize);
                     Endpoint_ClearOUT();
