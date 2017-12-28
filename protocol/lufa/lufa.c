@@ -289,9 +289,9 @@ void EVENT_USB_Device_ConfigurationChanged(void)
     /* Setup WebUSB Endpoints */
 #ifdef WEBUSB_ENABLE
     ConfigSuccess &= ENDPOINT_CONFIG(WEBUSB_IN_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
-                                     CONSOLE_EPSIZE, ENDPOINT_BANK_SINGLE);
+                                     WEBUSB_EPSIZE, ENDPOINT_BANK_SINGLE);
     ConfigSuccess &= ENDPOINT_CONFIG(WEBUSB_OUT_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_OUT,
-                                     CONSOLE_EPSIZE, ENDPOINT_BANK_SINGLE);
+                                     WEBUSB_EPSIZE, ENDPOINT_BANK_SINGLE);
 #endif
 }
 

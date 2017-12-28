@@ -708,7 +708,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                 Size    = sizeof(USB_HID_Descriptor_HID_t);
                 break;
 #endif
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) || defined(RAWHID_ENABLE)
             case CONSOLE_INTERFACE:
                 Address = &ConfigurationDescriptor.Console_HID;
                 Size    = sizeof(USB_HID_Descriptor_HID_t);
@@ -740,7 +740,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                 Size    = sizeof(ExtrakeyReport);
                 break;
 #endif
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) || defined(RAWHID_ENABLE)
             case CONSOLE_INTERFACE:
                 Address = &ConsoleReport;
                 Size    = sizeof(ConsoleReport);
