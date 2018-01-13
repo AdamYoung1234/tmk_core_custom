@@ -319,7 +319,7 @@ static uint8_t MS_OS_20_Descriptor[] = {
     0x08, 0x00,  // Descriptor size (8 bytes)
     0x02, 0x00,  // MS OS 2.0 function subset header
 
-    KEYBOARD_INTERFACE,  //First Interface Number
+    WEBUSB_INTERFACE,  //WebUSB Interface Number
 
     0x00,        // Reserved
     0x1c, 0x00,  // Size, MS OS 2.0 function subset
@@ -329,6 +329,23 @@ static uint8_t MS_OS_20_Descriptor[] = {
     0x03, 0x00,  // MS_OS_20_FEATURE_COMPATIBLE_ID
     'W',  'I',  'N',  'U',  'S',  'B',  0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static uint8_t MS_OS_10_Descriptor[] = {
+    0x28, 0x00, 0x00, 0x00, //length
+    0x00, 0x01, //1.0
+    0x04, 0x00, //Compatibility ID
+    0x01,   //number of sections
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, //reserved
+    WEBUSB_INTERFACE, //Interface number
+    0x01, //reserved
+    0x57, 0x49, 0x4E, 0x55,
+    0x53, 0x42, 0x00, 0x00, //Compatible ID
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, //subcompatible id
+    0x00, 0x00, 0x00, 0x00, //reseved
+    0x00, 0x00
 };
 #endif
 
@@ -358,28 +375,38 @@ void EVENT_USB_Device_ControlRequest(void)
 #ifdef WEBUSB_ENABLE
     if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_DEVICE)) {
         if(USB_ControlRequest.bRequest == WEBUSB_VENDOR_CODE) {
-            Endpoint_ClearSETUP();
             const uint8_t wValueL = USB_ControlRequest.wValue & 0xFF;
 
             switch(USB_ControlRequest.wIndex) {
                 //GET ALLOWED ORIGNS
                 case WEBUSB_REQUEST_GET_ALLOWED_ORIGINS:
+                    Endpoint_ClearSETUP();
                     webusb_send_allowed_origins_descriptor();
                 break;
                 //GET URL
                 case WEBUSB_REQUEST_GET_URL: 
+                    Endpoint_ClearSETUP();
                     webusb_send_url_descriptor(wValueL);
                 break;
             }
         }
-        //
-        else if(USB_ControlRequest.bRequest == MS_DESCRIPTOR_VENDOR_CODE) {
-            Endpoint_ClearSETUP();
 
+        //for MS OS Descriptor
+        else if(USB_ControlRequest.bRequest == MS_DESCRIPTOR_VENDOR_CODE) {
             switch(USB_ControlRequest.wIndex) {
-                case 0x07: 
-                    ReportData = (uint8_t*)&MS_OS_20_Descriptor;
+                //for ms os 2.0 descriptor
+                case 0x08: 
+                    Endpoint_ClearSETUP();
+                    ReportData = (uint8_t*)MS_OS_20_Descriptor;
                     ReportSize = sizeof(MS_OS_20_Descriptor);
+                    Endpoint_Write_Control_Stream_LE(ReportData, ReportSize);
+                    Endpoint_ClearOUT();
+                break;
+                //for ms os 1.0 descriptor
+                case 0x04:
+                    Endpoint_ClearSETUP();
+                    ReportData = (uint8_t*)MS_OS_10_Descriptor;
+                    ReportSize = sizeof(MS_OS_10_Descriptor);
                     Endpoint_Write_Control_Stream_LE(ReportData, ReportSize);
                     Endpoint_ClearOUT();
                 break;

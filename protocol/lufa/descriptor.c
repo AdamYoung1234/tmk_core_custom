@@ -258,9 +258,9 @@ DeviceDescriptor =
     .Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
 #ifdef WEBUSB_ENABLE
-    .USBSpecification       = VERSION_BCD(1,1,0),
-#else
     .USBSpecification       = VERSION_BCD(2,1,0),
+#else
+    .USBSpecification       = VERSION_BCD(1,1,0),
 #endif
     .Class                  = USB_CSCP_NoDeviceClass,
     .SubClass               = USB_CSCP_NoDeviceSubclass,
@@ -343,48 +343,7 @@ ConfigurationDescriptor =
             .EndpointSize           = KEYBOARD_EPSIZE,
             .PollingIntervalMS      = 0x0A
         },
-
-        /*
-         * WebUSB
-         */
-#ifdef WEBUSB_ENABLE
-    .WebUSB_Interface =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
-
-            .InterfaceNumber        = WEBUSB_INTERFACE,
-            .AlternateSetting       = 0x00,
-
-            .TotalEndpoints         = 2,
-
-            .Class                  = 0xFF,
-            .SubClass               = 0x00,
-            .Protocol               = 0x00,
-
-            .InterfaceStrIndex      = NO_DESCRIPTOR
-        },
-
-    .WebUSB_INEndpoint =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
-
-            .EndpointAddress        = (ENDPOINT_DIR_IN | WEBUSB_IN_EPNUM),
-            .Attributes             = (EP_TYPE_INTERRUPT  | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-            .EndpointSize           = WEBUSB_EPSIZE,
-            .PollingIntervalMS      = 0x01
-        },
-
-    .WebUSB_OUTEndpoint =
-        {
-            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
-
-            .EndpointAddress        = (ENDPOINT_DIR_OUT | WEBUSB_OUT_EPNUM),
-            .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-            .EndpointSize           = WEBUSB_EPSIZE,
-            .PollingIntervalMS      = 0x01
-        },
-#endif
-
+        
     /*
      * Mouse
      */
@@ -562,6 +521,47 @@ ConfigurationDescriptor =
             .PollingIntervalMS      = 0x01
         },
 #endif
+
+        /*
+         * WebUSB
+         */
+#ifdef WEBUSB_ENABLE
+    .WebUSB_Interface =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+            .InterfaceNumber        = WEBUSB_INTERFACE,
+            .AlternateSetting       = 0x00,
+
+            .TotalEndpoints         = 2,
+
+            .Class                  = 0xFF,
+            .SubClass               = 0x00,
+            .Protocol               = 0x00,
+
+            .InterfaceStrIndex      = NO_DESCRIPTOR
+        },
+
+    .WebUSB_INEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_IN | WEBUSB_IN_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT  | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+
+    .WebUSB_OUTEndpoint =
+        {
+            .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+            .EndpointAddress        = (ENDPOINT_DIR_OUT | WEBUSB_OUT_EPNUM),
+            .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+            .EndpointSize           = WEBUSB_EPSIZE,
+            .PollingIntervalMS      = 0x01
+        },
+#endif
 };
 
 
@@ -604,6 +604,17 @@ ProductString =
 };
 
 #ifdef WEBUSB_ENABLE
+static uint8_t MSStringDescriptor[] = {
+    0x12,   //length
+    0x3,    //String type
+    0x4D, 0x00, 0x53, 0x00,
+    0x46, 0x00, 0x54, 0x00,
+    0x31, 0x00, 0x30, 0x00,
+    0x30, 0x00,  //MSFT100
+    MS_DESCRIPTOR_VENDOR_CODE, //Vendor request code
+    0x00 //Padding
+};
+
 static uint8_t BOSDescriptor[] = {
     0x05,  // Length
     DTYPE_BOS,  // Binary Object Store descriptor
@@ -688,6 +699,12 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                     Size    = ProductString.Header.Size;
 #endif
                     break;
+#ifdef WEBUSB_ENABLE
+                case 0xEE:
+                    Address = &MSStringDescriptor;
+                    Size    = 0x12;
+                    break;
+#endif
             }
             break;
         case HID_DTYPE_HID:

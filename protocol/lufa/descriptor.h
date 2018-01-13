@@ -57,13 +57,6 @@ typedef struct
     USB_HID_Descriptor_HID_t              Keyboard_HID;
     USB_Descriptor_Endpoint_t             Keyboard_INEndpoint;
 
-#ifdef WEBUSB_ENABLE
-    // WebUSB Interface
-    USB_Descriptor_Interface_t            WebUSB_Interface;
-    USB_Descriptor_Endpoint_t             WebUSB_INEndpoint;
-    USB_Descriptor_Endpoint_t             WebUSB_OUTEndpoint;
-#endif
-
 #ifdef MOUSE_ENABLE
     // Mouse HID Interface
     USB_Descriptor_Interface_t            Mouse_Interface;
@@ -92,22 +85,23 @@ typedef struct
     USB_HID_Descriptor_HID_t              NKRO_HID;
     USB_Descriptor_Endpoint_t             NKRO_INEndpoint;
 #endif
+
+#ifdef WEBUSB_ENABLE
+    // WebUSB Interface
+    USB_Descriptor_Interface_t            WebUSB_Interface;
+    USB_Descriptor_Endpoint_t             WebUSB_INEndpoint;
+    USB_Descriptor_Endpoint_t             WebUSB_OUTEndpoint;
+#endif
 } USB_Descriptor_Configuration_t;
 
 
 /* index of interface */
 #define KEYBOARD_INTERFACE          0
 
-#ifdef WEBUSB_ENABLE
-#   define WEBUSB_INTERFACE         (KEYBOARD_INTERFACE + 1)
-#else
-#   define WEBUSB_INTERFACE         KEYBOARD_INTERFACE
-#endif
-
 #ifdef MOUSE_ENABLE
-#   define MOUSE_INTERFACE          (WEBUSB_INTERFACE + 1)
+#   define MOUSE_INTERFACE          (KEYBOARD_INTERFACE + 1)
 #else
-#   define MOUSE_INTERFACE          WEBUSB_INTERFACE
+#   define MOUSE_INTERFACE          KEYBOARD_INTERFACE
 #endif 
 
 #ifdef EXTRAKEY_ENABLE
@@ -128,25 +122,24 @@ typedef struct
 #   define NKRO_INTERFACE           CONSOLE_INTERFACE
 #endif
 
+#ifdef WEBUSB_ENABLE
+#   define WEBUSB_INTERFACE         (NKRO_INTERFACE + 1)
+#else
+#   define WEBUSB_INTERFACE         NKRO_INTERFACE
+#endif
+
 
 /* nubmer of interfaces */
-#define TOTAL_INTERFACES            (NKRO_INTERFACE + 1)
+#define TOTAL_INTERFACES            (WEBUSB_INTERFACE + 1)
 
 
 // Endopoint number and size
 #define KEYBOARD_IN_EPNUM           1
 
-#ifdef WEBUSB_ENABLE
-#   define WEBUSB_IN_EPNUM          (KEYBOARD_IN_EPNUM + 1)
-#   define WEBUSB_OUT_EPNUM         (WEBUSB_IN_EPNUM + 1)
-#else
-#   define WEBUSB_OUT_EPNUM         KEYBOARD_IN_EPNUM
-#endif
-
 #ifdef MOUSE_ENABLE
-#   define MOUSE_IN_EPNUM           (WEBUSB_OUT_EPNUM + 1) 
+#   define MOUSE_IN_EPNUM           (KEYBOARD_IN_EPNUM + 1) 
 #else
-#   define MOUSE_IN_EPNUM           WEBUSB_OUT_EPNUM
+#   define MOUSE_IN_EPNUM           KEYBOARD_IN_EPNUM
 #endif
 
 #ifdef EXTRAKEY_ENABLE
@@ -164,11 +157,17 @@ typedef struct
 
 #ifdef NKRO_ENABLE
 #   define NKRO_IN_EPNUM            (CONSOLE_OUT_EPNUM + 1)
-#   if defined(__AVR_ATmega32U2__) && NKRO_IN_EPNUM > 4
+#else
+#   define NKRO_IN_EPNUM            CONSOLE_OUT_EPNUM
+#endif
+
+#ifdef WEBUSB_ENABLE
+#   define WEBUSB_IN_EPNUM          (NKRO_IN_EPNUM + 1)
+#   define WEBUSB_OUT_EPNUM         (WEBUSB_IN_EPNUM + 1)
+#   if defined(__AVR_ATmega32U2__) && WEBUSB_OUT_EPNUM > 4
 #       error "Endpoints are not available enough to support all functions. Remove some in Makefile.(MOUSEKEY, EXTRAKEY, CONSOLE, NKRO)"
 #   endif
 #endif
-
 
 #define KEYBOARD_EPSIZE             8
 #define MOUSE_EPSIZE                8
